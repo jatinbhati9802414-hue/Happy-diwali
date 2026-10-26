@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Happy Diwali 🪔</title>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;overflow:hidden;background:#000;font-family:Georgia,'Times New Roman',serif;color:#fff}
+#intro{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:20px;
+background:radial-gradient(circle at 50% 30%,#7a1d00 0%,#3b0a2e 55%,#12011f 100%);transition:opacity .6s}
+#fw{position:absolute;inset:0;width:100%;height:100%}
+.box{position:relative;z-index:2}
+h1{font-size:clamp(2.2rem,8vw,5rem);margin:.2em 0;background:linear-gradient(90deg,#ffd54a,#ff8a00,#ffd54a);-webkit-background-clip:text;background-clip:text;color:transparent;text-shadow:0 0 30px #ff9800aa;animation:glow 2s infinite alternate}
+@keyframes glow{from{filter:drop-shadow(0 0 6px #ffb300)}to{filter:drop-shadow(0 0 22px #ff6d00)}}
+.diyas{font-size:clamp(2rem,7vw,3.5rem);animation:fl 1.2s infinite alternate}
+@keyframes fl{from{transform:scale(1);opacity:.85}to{transform:scale(1.15);opacity:1}}
+p{opacity:.9;margin:.4em 0 1.2em;font-size:1.1rem}
+input{width:min(86vw,360px);padding:14px 18px;font-size:1.2rem;border-radius:40px;border:2px solid #ffb300;background:#ffffff18;color:#fff;outline:none;text-align:center;font-family:inherit;box-shadow:0 0 18px #ff9800aa}
+input::placeholder{color:#ffe0a0aa}
+.hint{font-size:.9rem;margin-top:14px;opacity:.7}
+#scene{position:fixed;inset:0;display:none}
+canvas#c{display:block;width:100%;height:100%}
+#txt{position:fixed;left:0;right:0;bottom:12%;text-align:center;font-size:clamp(1.2rem,4.5vw,2.2rem);color:#c00;text-shadow:0 0 12px #f00;letter-spacing:2px;pointer-events:none;z-index:5;animation:flick .15s infinite}
+@keyframes flick{0%{opacity:1}50%{opacity:.7}100%{opacity:.95}}
+#flash{position:fixed;inset:0;background:#fff;opacity:0;pointer-events:none;z-index:9}
+#redv{position:fixed;inset:0;pointer-events:none;z-index:6;background:radial-gradient(circle,transparent 40%,#400000cc 100%)}
+#again{position:fixed;top:16px;right:16px;z-index:10;display:none;padding:10px 18px;border-radius:30px;border:1px solid #f33;background:#000a;color:#f66;font-size:1rem;cursor:pointer}
+.shake{animation:sh .08s infinite}
+@keyframes sh{0%{transform:translate(6px,-4px)}25%{transform:translate(-8px,5px)}50%{transform:translate(5px,8px)}75%{transform:translate(-6px,-7px)}100%{transform:translate(4px,3px)}}
+</style>
+</head>
+<body>
+<div id="intro">
+  <canvas id="fw"></canvas>
+  <div class="box">
+    <div class="diyas">🪔 🪔 🪔</div>
+    <h1>Happy Diwali</h1>
+    <p>Apna naam likho aur Enter dabao ✨</p>
+    <input id="name" type="text" placeholder="Tumhara naam..." maxlength="24" autocomplete="off" autofocus>
+    <div class="hint">Enter dabane ke baad sambhal ke... 👻</div>
+  </div>
+</div>
+
+<div id="scene">
+  <canvas id="c"></canvas><div id="redv"></div><div id="txt"></div>
+</div>
+<div id="flash"></div>
+<button id="again">↺ Phir se</button>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+// ---------- Diwali fireworks on intro ----------
+(function(){
+  const cv=document.getElementById('fw'),x=cv.getContext('2d');let W,H,P=[];
+  function rs(){W=cv.width=innerWidth;H=cv.height=innerHeight}rs();addEventListener('resize',rs);
+  function boom(){const cx=Math.random()*W,cy=Math.random()*H*.55,h=Math.random()*60+20;
+    for(let i=0;i<50;i++){const a=Math.random()*6.28,s=Math.random()*4+1;P.push({x:cx,y:cy,vx:Math.cos(a)*s,vy:Math.sin(a)*s,l:60,h})}}
+  setInterval(boom,700);
+  (function loop(){if(document.getElementById('intro').style.display==='none')return;
+    x.fillStyle='rgba(18,1,31,.25)';x.fillRect(0,0,W,H);
+    P=P.filter(p=>p.l>0);P.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.vy+=.05;p.l--;x.fillStyle='hsla('+p.h+',100%,60%,'+p.l/60+')';x.fillRect(p.x,p.y,2.5,2.5)});
+    requestAnimationFrame(loop)})();
+})();
+
+// ---------- Audio ----------
+let AC;
+function startAudio(){
+  AC=new (window.AudioContext||window.webkitAudioContext)();
+  [55,58,110].forEach((f,i)=>{const o=AC.createOscillator(),g=AC.createGain();o.type=i==2?'sine':'sawtooth';o.frequency.value=f;g.gain.value=.05;
+    const l=AC.createOscillator(),lg=AC.createGain();l.frequency.value=.2+i*.1;lg.gain.value=.03;l.connect(lg);lg.connect(g.gain);l.start();
+    o.connect(g);g.connect(AC.destination);o.start()});
+}
+function scream(){
+  if(!AC)return;const t=AC.currentTime;
+  for(let k=0;k<3;k++){const o=AC.createOscillator(),g=AC.createGain();o.type='sawtooth';
+    o.frequency.setValueAtTime(600+k*180,t);o.frequency.exponentialRampToValueAtTime(1800+k*300,t+.5);o.frequency.exponentialRampToValueAtTime(300,t+1.6);
+    g.gain.setValueAtTime(.35,t);g.gain.exponentialRampToValueAtTime(.001,t+1.7);o.connect(g);g.connect(AC.destination);o.start(t);o.stop(t+1.8)}
+  const b=AC.createBuffer(1,AC.sampleRate*1.5,AC.sampleRate),d=b.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=(Math.random()*2-1)*(1-i/d.length);
+  const n=AC.createBufferSource(),ng=AC.createGain();n.buffer=b;ng.gain.value=.5;n.connect(ng);ng.connect(AC.destination);n.start(t);
+}
+
+// ---------- 3D Scene ----------
+let renderer,scene,camera,ghosts=[],main,started=false,t0=0,lunge=false,done=false,userName='';
+function makeGhost(scale){
+  const g=new THREE.Group();
+  const mat=new THREE.MeshStandardMaterial({color:0xd8e6e0,emissive:0x2a4a40,roughness:.9,transparent:true,opacity:.88});
+  const head=new THREE.Mesh(new THREE.SphereGeometry(1,24,18),mat);head.position.y=1.6;g.add(head);
+  const bodyG=new THREE.CylinderGeometry(1,1.25,2.8,24,12,true);
+  const body=new THREE.Mesh(bodyG,mat);body.position.y=.3;body.material.side=THREE.DoubleSide;g.add(body);
+  g.userData.pos=bodyG.attributes.position;g.userData.orig=bodyG.attributes.position.array.slice();g.userData.geo=bodyG;
+  const black=new THREE.MeshBasicMaterial({color:0x000000});
+  [-.38,.38].forEach(sx=>{const e=new THREE.Mesh(new THREE.SphereGeometry(.28,12,10),black);e.scale.set(1,1.5,.5);e.position.set(sx,1.75,.88);g.add(e);
+    const r=new THREE.Mesh(new THREE.SphereGeometry(.09,10,8),new THREE.MeshBasicMaterial({color:0xff1010}));r.position.set(sx,1.7,.98);g.add(r)});
+  const m=new THREE.Mesh(new THREE.SphereGeometry(.32,14,12),black);m.scale.set(1,2.2,.5);m.position.set(0,1.0,.92);g.add(m);
+  [-1,1].forEach(s=>{const a=new THREE.Mesh(new THREE.CylinderGeometry(.12,.05,2.2,8),mat);a.position.set(s*1.25,.9,.3);a.rotation.z=s*.9;a.rotation.x=-.6;g.add(a)});
+  g.scale.setScalar(scale);return g;
+}
+function initScene(){
+  const cv=document.getElementById('c');
+  renderer=new THREE.WebGLRenderer({canvas:cv,antialias:true});renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.setSize(innerWidth,innerHeight);
+  scene=new THREE.Scene();scene.background=new THREE.Color(0x020306);scene.fog=new THREE.FogExp2(0x020306,.07);
+  camera=new THREE.PerspectiveCamera(70,innerWidth/innerHeight,.1,100);camera.position.set(0,1.7,6);
+  scene.add(new THREE.AmbientLight(0x223344,.5));
+  window.moon=new THREE.PointLight(0x7799ff,1.2,60);moon.position.set(-8,12,-10);scene.add(moon);
+  window.flick=new THREE.PointLight(0xff2200,1.5,14);flick.position.set(0,2,3);scene.add(flick);
+  const floor=new THREE.Mesh(new THREE.PlaneGeometry(80,80),new THREE.MeshStandardMaterial({color:0x0a0c0a,roughness:1}));floor.rotation.x=-Math.PI/2;scene.add(floor);
+  const bark=new THREE.MeshStandardMaterial({color:0x120c08});
+  for(let i=0;i<22;i++){const t=new THREE.Group(),h=3+Math.random()*4;
+    const tr=new THREE.Mesh(new THREE.CylinderGeometry(.1,.3,h,6),bark);tr.position.y=h/2;t.add(tr);
+    for(let j=0;j<3;j++){const b=new THREE.Mesh(new THREE.CylinderGeometry(.03,.1,2,5),bark);b.position.set(0,h*.6+j*.4,0);b.rotation.z=(Math.random()-.5)*2.5;b.rotation.y=Math.random()*6;t.add(b)}
+    const a=Math.random()*6.28,r=6+Math.random()*22;t.position.set(Math.cos(a)*r,0,Math.sin(a)*r-6);scene.add(t)}
+  const stone=new THREE.MeshStandardMaterial({color:0x2a2a2a});
+  for(let i=0;i<10;i++){const s=new THREE.Mesh(new THREE.BoxGeometry(.8,1.2,.2),stone);s.position.set((Math.random()-.5)*16,.6,-2-Math.random()*14);s.rotation.y=(Math.random()-.5)*.6;s.rotation.z=(Math.random()-.5)*.3;scene.add(s)}
+  main=makeGhost(1.6);main.position.set(0,0,-14);scene.add(main);ghosts.push(main);
+  for(let i=0;i<6;i++){const g=makeGhost(.9+Math.random()*.7);g.position.set((Math.random()-.5)*22,0,-4-Math.random()*20);g.userData.ph=Math.random()*9;scene.add(g);ghosts.push(g)}
+  addEventListener('resize',()=>{renderer.setSize(innerWidth,innerHeight);camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix()});
+  addEventListener('mousemove',e=>{mx=(e.clientX/innerWidth-.5)*2;my=(e.clientY/innerHeight-.5)*2});
+}
+let mx=0,my=0;
+function say(s){document.getElementById('txt').textContent=s}
+function animate(now){
+  requestAnimationFrame(animate);if(!started)return;
+  const t=(now-t0)/1000;
+  ghosts.forEach((g,i)=>{
+    const p=g.userData.pos,o=g.userData.orig,ph=(g.userData.ph||0);
+    for(let k=0;k<p.count;k++){const y=o[k*3+1];if(y<-.5){const a=Math.atan2(o[k*3+2],o[k*3]);p.setY(k,y+Math.sin(a*5+t*4+ph)*.28)}}
+    p.needsUpdate=true;
+    if(g!==main){g.position.y=.3+Math.sin(t*1.3+ph)*.4;g.position.x+=Math.sin(t*.5+ph)*.01;g.lookAt(camera.position.x,g.position.y,camera.position.z)}
+  });
+  flick.intensity=Math.random()>.9?0:1.2+Math.random()*1.5;
+  if(!lunge){
+    main.position.z=Math.min(-14+t*1.15,-3.2);main.position.y=.2+Math.sin(t*2)*.3;
+    main.lookAt(camera.position.x,main.position.y+1,camera.position.z);
+  }
+  camera.position.x+=((mx*1.2)-camera.position.x)*.03;camera.position.y=1.7-my*.3+Math.sin(t*1.5)*.03;
+  camera.lookAt(0,1.7,0);
+  if(t>2&&t<4)say(userName+'... tum akele nahi ho...');
+  if(t>4&&t<7.5)say('wo tumhe dekh raha hai '+userName+'... 👁️');
+  if(t>7.5&&!lunge&&!done){lunge=true;jump()}
+  if(lunge&&!done){
+    main.position.z+=.55;main.position.y=1.2;main.lookAt(camera.position);
+    if(main.position.z>=camera.position.z-1.6){done=true;final()}
+  }
+  renderer.render(scene,camera);
+}
+function jump(){
+  say('PEECHE DEKHO!!');scream();
+  const fl=document.getElementById('flash');fl.style.opacity=1;setTimeout(()=>fl.style.opacity=0,90);
+  document.getElementById('scene').classList.add('shake');
+}
+function final(){
+  scream();const fl=document.getElementById('flash');
+  let n=0;const iv=setInterval(()=>{fl.style.background=n%2?'#f00':'#fff';fl.style.opacity=n%2?.7:1;n++;if(n>7){clearInterval(iv);fl.style.opacity=0}},70);
+  say('😈 HAPPY DIWALI '+userName.toUpperCase()+'! 😈');
+  setTimeout(()=>{document.getElementById('scene').classList.remove('shake');document.getElementById('again').style.display='block'},1600);
+}
+function begin(){
+  userName=document.getElementById('name').value.trim()||'Dost';
+  startAudio();
+  const intro=document.getElementById('intro');intro.style.opacity=0;
+  setTimeout(()=>{intro.style.display='none';document.getElementById('scene').style.display='block';
+    if(!renderer)initScene();
+    ghosts.forEach(g=>{});main.position.set(0,0,-14);lunge=false;done=false;t0=performance.now();started=true;say('');
+  },600);
+}
+document.getElementById('name').addEventListener('keydown',e=>{if(e.key==='Enter')begin()});
+document.getElementById('again').onclick=()=>location.reload();
+requestAnimationFrame(animate);
+</script>
+</body>
+</html>
